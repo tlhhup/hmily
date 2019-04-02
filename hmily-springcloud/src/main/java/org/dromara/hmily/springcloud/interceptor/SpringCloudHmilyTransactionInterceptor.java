@@ -62,21 +62,26 @@ public class SpringCloudHmilyTransactionInterceptor implements HmilyTransactionI
     @Override
     public Object interceptor(final ProceedingJoinPoint pjp) throws Throwable {
         HmilyTransactionContext hmilyTransactionContext;
-        RequestAttributes requestAttributes = null;
-        try {
-            requestAttributes = RequestContextHolder.currentRequestAttributes();
-        } catch (Throwable ex) {
-            LogUtil.warn(LOGGER, () -> "can not acquire request info:" + ex.getLocalizedMessage());
-        }
-
-        HttpServletRequest request = requestAttributes == null ? null : ((ServletRequestAttributes) requestAttributes).getRequest();
-        String context = request == null ? null : request.getHeader(CommonConstant.HMILY_TRANSACTION_CONTEXT);
-        if (StringUtils.isNoneBlank(context)) {
-            hmilyTransactionContext = GsonUtils.getInstance().fromJson(context, HmilyTransactionContext.class);
-        } else {
-            hmilyTransactionContext = HmilyTransactionContextLocal.getInstance().get();
-            if (Objects.nonNull(hmilyTransactionContext)) {
+        //1.先从上下文中获取,同一服务中处理逻辑
+        hmilyTransactionContext = HmilyTransactionContextLocal.getInstance().get();
+        if (Objects.nonNull(hmilyTransactionContext)) {
+            //如果不是本地事务，则设置为Spring cloud事务，让后期在ParticipantHmilyTransactionHandler将Role设置为local
+            if(hmilyTransactionContext.getRole()!=HmilyRoleEnum.LOCAL.getCode()) {
                 hmilyTransactionContext.setRole(HmilyRoleEnum.SPRING_CLOUD.getCode());
+            }
+        } else {
+            //2.从请求头中获取，被动方事务
+            RequestAttributes requestAttributes = null;
+            try {
+                requestAttributes = RequestContextHolder.currentRequestAttributes();
+            } catch (Throwable ex) {
+                LogUtil.warn(LOGGER, () -> "can not acquire request info:" + ex.getLocalizedMessage());
+            }
+
+            HttpServletRequest request = requestAttributes == null ? null : ((ServletRequestAttributes) requestAttributes).getRequest();
+            String context = request == null ? null : request.getHeader(CommonConstant.HMILY_TRANSACTION_CONTEXT);
+            if (StringUtils.isNoneBlank(context)) {
+                hmilyTransactionContext = GsonUtils.getInstance().fromJson(context, HmilyTransactionContext.class);
             }
         }
         return hmilyTransactionAspectService.invoke(hmilyTransactionContext, pjp);

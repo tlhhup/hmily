@@ -64,7 +64,6 @@ public class AccountServiceImpl implements AccountService {
      * 扣款支付
      *
      * @param accountDTO 参数dto
-     * @return true
      */
     @Override
     @Hmily(confirmMethod = "confirm", cancelMethod = "cancel")
@@ -78,6 +77,10 @@ public class AccountServiceImpl implements AccountService {
         inlineService.testInline();
     }
 
+    /**
+     * @param accountDTO 参数dto
+     * @return
+     */
     @Override
     public boolean testPayment(AccountDTO accountDTO) {
         final AccountDO accountDO = accountMapper.findByUserId(accountDTO.getUserId());

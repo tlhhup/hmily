@@ -33,11 +33,14 @@ public interface AccountService {
      * 扣款支付
      *
      * @param accountDTO 参数dto
-     * @return true
      */
     @Hmily
     void payment(AccountDTO accountDTO);
 
+    /**
+     * @param accountDTO 参数dto
+     * @return
+     */
     boolean testPayment(AccountDTO accountDTO);
 
     /**

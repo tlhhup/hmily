@@ -52,7 +52,7 @@ public interface OrderMapper {
     /**
      * 获取所有的订单
      *
-     * @return List<Order>
+     * @return orders
      */
     @Select("select * from  order")
     List<Order> listAll();
